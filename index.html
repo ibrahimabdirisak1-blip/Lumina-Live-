@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Platform UI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars" id="toggle-btn" style="cursor: pointer;"></i>
+                <span>Settings</span>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-cog"></i>
+                    <span>General Settings</span>
+                </a>
+
+                <div class="sidebar-divider" style="height: 1px; background: #eee; margin: 10px 0;"></div>
+
+                <div class="upload-section" style="padding: 10px 20px;">
+                    <p style="font-size: 0.75rem; color: #888; margin-bottom: 8px; text-transform: uppercase;">Media
+                        Center</p>
+
+                    <input type="file" id="sidebar-file-upload" accept="video/*,audio/*" style="display: none;">
+
+                    <a href="javascript:void(0)" class="menu-item"
+                        onclick="document.getElementById('sidebar-file-upload').click(); return false;">
+                        <i class="fas fa-cloud-upload-alt" style="color: #3498db;"></i>
+                        <span>Upload Media</span>
+                    </a>
+
+                    <div id="upload-status" style="display: none; margin-top: 10px; font-size: 0.8rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span id="file-name-sidebar"
+                                style="color: #2c3e50; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;"></span>
+                            <i class="fas fa-times" onclick="cancelUpload()"
+                                style="color: #e74c3c; cursor: pointer;"></i>
+                        </div>
+                        <div style="width: 100%; background: #eee; height: 4px; border-radius: 2px;">
+                            <div id="upload-progress"
+                                style="width: 0%; background: #3498db; height: 100%; border-radius: 2px; transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="media-gallery" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                        <p style="font-size: 0.65rem; color: #aaa; margin-bottom: 8px;">RECENT UPLOADS</p>
+                        <div id="file-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-divider" style="height: 1px; background: #eee; margin: 10px 0;"></div>
+
+                <a href="#" class="menu-item" id="nav-dashboard">
+                    <i class="fas fa-columns"></i>
+                    <span>Dashboard</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Video/Audio Title</h1>
+            </header>
+
+            <div class="content-grid">
+                <section class="video-column">
+                    <div class="video-player" id="main-player-container"
+                        style="background: #000; position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden;">
+                        <video id="main-video" style="width: 100%; height: 100%; display: none;" controls></video>
+
+                        <div class="video-overlay" id="player-placeholder"
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white;">
+                            <i class="fas fa-play play-center" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                            <p>Select media from settings to play</p>
+                        </div>
+                    </div>
+
+                    <section class="video-info-container">
+                        <h1 class="video-title">Lumina Live: The Future of Interaction</h1>
+                        <div class="feature-bar">
+                            <div class="transcript-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="transcriptToggle">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="control-label">Live Transcript</span>
+                            </div>
+                            <div class="ai-status-indicator" id="active-layer-toggle" style="cursor: pointer;">
+                                <div class="gemini-sparkle">
+                                    <i class="fas fa-sparkles"></i>
+                                </div>
+                                <span class="ai-label">Lumina AI Active</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- LAYER 3: LUMINA AI ACTIVE PANEL (Relocated & Toggled) -->
+                    <div class="panel active-mockup-panel" id="active-layer-panel" style="display: none;">
+                        <div class="mockup-header">
+                            <!-- Toggle switch -->
+                            <div class="mockup-toggle" id="active-master-toggle-container">
+                                <span class="toggle-label-off">Off</span>
+                                <div class="toggle-track active" id="master-toggle-click">
+                                    <div class="toggle-thumb"></div>
+                                </div>
+                                <span class="toggle-label-on">On</span>
+                            </div>
+
+                            <!-- History Search Bar (Expandable) -->
+                            <div class="mockup-search-wrapper" id="history-search-wrapper"
+                                style="opacity: 1; pointer-events: all; display: flex;">
+                                <div class="search-pill" id="search-pill">
+                                    <i class="fas fa-search search-trigger-icon" id="search-trigger"></i>
+                                    <input type="text" id="active-history-search" placeholder="Search entire library..."
+                                        class="search-input-collapsed">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="active-display" class="mockup-display-area">
+                            <div class="active-welcome" id="active-welcome-msg">
+                                <i class="fas fa-layer-group"
+                                    style="font-size: 1.5rem; margin-bottom: 10px; color: #94a3b8;"></i>
+                                <p style="font-size: 0.9rem; color: #64748b;">Knowledge layer is clear.<br>Ask a
+                                    question to begin research.</p>
+                            </div>
+                        </div>
+
+                        <div class="mockup-footer">
+                            <div class="mockup-query-bar">
+                                <input type="text" id="active-query-input" placeholder="Ask about this video...">
+                                <button id="active-query-btn"><i class="fas fa-search"></i></button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- NEW: Transcript Box -->
+                    <div id="live-transcript-box">
+                        <p class="transcript-placeholder" id="transcript-placeholder">Waiting for audio...</p>
+                        <p id="transcript-output"></p>
+                    </div>
+
+                    <div class="add-comment-box">
+                        <input type="text" id="comment-input" placeholder="Add a comment...">
+                        <button class="btn-primary" id="comment-btn">Comment</button>
+                    </div>
+
+                    <div class="comments-section" id="comments-list">
+                        <div class="comments-header">
+                            <h2>Comments</h2>
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                        <!-- Comments will be prepended here -->
+                        <div class="comment-item">
+                            <div class="avatar user-1">H</div>
+                            <div class="comment-content">
+                                <div class="comment-meta"><span class="username">User1</span><span
+                                        class="timestamp">3:20 PM</span></div>
+                                <p class="comment-text">Great video!</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chat-column">
+
+                    <div class="panel chat-panel">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-microphone"></i> Live Chat Q and A</h2>
+                        </div>
+                        <div class="chat-messages">
+                            <div class="chat-item">
+                                <div class="avatar user-1">H</div>
+                                <div class="chat-content">
+                                    <div class="chat-meta"><span class="username">User1</span><span
+                                            class="timestamp">3:25 PM</span></div>
+                                    <p>What is the best way to grow a YouTube channel?</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="interaction-bar">
+                            <div class="input-group">
+                                <input type="text" placeholder="Ask a question..." class="ask-input">
+                            </div>
+                            <div class="envelope-icon-wrapper" id="envelope-btn">
+                                <i class="far fa-envelope"></i>
+                                <span class="badge" style="display: none;">0</span>
+
+                                <!-- TINY INBOX DROPDOWN -->
+                                <div id="tiny-inbox" class="inbox-hidden">
+                                    <div class="inbox-header">
+                                        <span><i class="fas fa-inbox"></i> Delivered Answers</span>
+                                    </div>
+                                    <div id="inbox-content" class="inbox-messages">
+                                        <p class="empty-msg">Waiting for answers...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel unanswered-panel" style="margin-top: 20px; border-top: 2px solid #e74c3c;">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-question-circle"></i> Un-answered Questions</h2>
+                            <span class="status-badge"
+                                style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">Speaker
+                                Queue</span>
+                        </div>
+                        <div class="chat-messages" id="unanswered-list" style="max-height: 250px; overflow-y: auto;">
+                            <div class="chat-item">
+                                <div class="chat-content">
+                                    <p style="color: #666; font-style: italic;">Questions marked for the speaker will
+                                        appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- LAYER 4: CREATOR INSIGHT MODAL -->
+    <div id="analytics-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content analytics-report">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-pie"></i> Lumina Creator Insight Report</h2>
+                <i class="fas fa-times close-modal" onclick="closeAnalytics()"></i>
+            </div>
+            <div id="analytics-body" class="modal-body">
+                <div class="loading-engine">
+                    <i class="fas fa-cog fa-spin"></i>
+                    <p>Analyzing Transcription, Questions, and Comments...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closeAnalytics()">Close Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
